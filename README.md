@@ -194,6 +194,46 @@ npm run typecheck
 
 ---
 
+## 🐳 Docker 部署
+
+适合把整套服务（前端 + 后端）打包到服务器 / 云主机运行，宿主机无需安装 Python / Node。
+
+### 构建与启动
+
+```bash
+# 在项目根目录，确保 backend/.env 已填好 LLM_API_KEY。
+# 注意：Docker 不读取 .env 文件，而是由 docker-compose 的 env_file 将其注入为
+# 容器环境变量；镜像本身不含任何密钥。
+docker compose up -d --build
+```
+
+启动后访问 `http://<服务器IP>:8000`。首次启动会从 HuggingFace 镜像（`HF_ENDPOINT=https://hf-mirror.com`）拉取嵌入 / 重排模型（约 1–2 GB），请保持联网。
+
+### 数据持久化
+
+`docker-compose.yml` 已挂载两个卷，容器重启不丢数据：
+
+- `./backend/data` → 知识库原始资料与向量数据
+- `./backend/app.db` → SQLite 用户 / 会话库
+
+网页「模型设置」写入的 `backend/llm_runtime.json` 默认保存在容器内（重启后需重设）；如需持久化，可在 `volumes` 中追加一行：
+
+```yaml
+      - ./backend/llm_runtime.json:/app/backend/llm_runtime.json
+```
+
+### 健康检查与编排
+
+compose 内置 healthcheck：后端 `/api/health` 返回 `{"status":"ok"}` 即视为就绪（`start_period` 180s，给模型下载留时间），可用于容器编排与负载均衡探活。
+
+### 运行说明
+
+- 默认 **单 worker**（`--workers 1`）：torch / bge / faster-whisper 占用内存较大，多 worker 会各自加载一份；并发由 uvicorn 线程池处理，足够本项目场景。
+- 改端口：调整 `docker-compose.yml` 的 `ports` 映射（如 `"9000:8000"`）即可。
+- 本地开发 / Windows 体验仍推荐双击 `启动.bat`，无需 Docker。
+
+---
+
 ## ❓ 常见问题
 
 - **打开浏览器是空白页 / `{"detail":"Not Found"}`**：通常是旧的后端进程仍占用 `8000` 端口。双击 `启动.bat` 会自动清理；或手动结束占用进程后重试。
@@ -206,7 +246,7 @@ npm run typecheck
 ## 📌 当前进度
 
 - ✅ M1 后端骨架 · M2 RAG 摄入检索引用 · M3 Agent+记忆+Skills · M4 语音 ASR/TTS · M5 前端（登录/聊天/知识库/设置）
-- ⏳ M6 性能优化 / Docker 部署（待做）
+- ✅ M6 性能优化（Chroma 客户端单例化 + 启动预热） / Docker 部署（Dockerfile + docker-compose）
 
 ---
 

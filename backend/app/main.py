@@ -24,16 +24,18 @@ _FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "d
 
 
 def _preload_models():
-    """后台预加载 bge 嵌入 / 重排模型，避免首次提问时再等待数十秒加载。"""
+    """后台预加载 bge 嵌入 / 重排模型与 Chroma 客户端，避免首次提问时再等待加载。"""
     try:
+        from app.rag.chroma_store import get_client
         from app.rag.embeddings import _encoder
         from app.rag.retrieve import _reranker
 
         _encoder()
         _reranker()
-        print("[startup] bge embedding + reranker models preloaded.")
+        get_client()  # 预热 Chroma 持久化客户端单例，缩短首次查询连接开销
+        print("[startup] bge embedding + reranker + chroma client preloaded.")
     except Exception as e:  # noqa: BLE001
-        print(f"[startup] bge preload skipped (first query will load): {e}")
+        print(f"[startup] preload skipped (first query will load): {e}")
 
 
 @asynccontextmanager

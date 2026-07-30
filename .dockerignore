@@ -1,0 +1,28 @@
+# 依赖与构建产物
+**/node_modules
+frontend/dist
+backend/.venv
+**/__pycache__
+**/*.pyc
+
+# 密钥与本地配置（不进镜像，运行时通过 env_file / 环境变量注入）
+**/.env
+**/.env.*
+backend/llm_runtime.json
+
+# 数据库与向量数据（运行时用卷挂载宿主机目录）
+*.db
+chroma/
+backend/data/chroma
+backend/data/kb_raw
+
+# 版本控制与文档噪音
+.git
+.gitignore
+**/.git
+*.log
+.workbuddy
+
+# 本地启动器/Windows 专用（非容器内所需）
+启动.bat
+launcher.py

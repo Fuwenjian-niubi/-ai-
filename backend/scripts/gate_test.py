@@ -30,16 +30,29 @@ def venv_python() -> str:
 PY = venv_python()
 
 
+def resolve_npm() -> str:
+    """稳健解析 npm 可执行文件（Windows 上为 npm.cmd）。"""
+    for name in ("npm", "npm.cmd"):
+        p = shutil.which(name)
+        if p:
+            return p
+    return "npm.cmd"  # Windows 回退
+
+
 def run(cmd, cwd):
     print("\n>>> " + " ".join(cmd) + f"   (cwd={cwd})")
-    return subprocess.run(cmd, cwd=str(cwd)).returncode
+    try:
+        return subprocess.run(cmd, cwd=str(cwd)).returncode
+    except Exception as e:  # noqa: BLE001
+        print(f"[gate] command failed to start: {e}")
+        return 1
 
 
 def main() -> int:
     rc = run([PY, "-m", "pytest", "tests", "-q"], BACKEND)
     if rc != 0:
         return rc
-    npm = shutil.which("npm") or "npm"
+    npm = resolve_npm()
     return run([npm, "run", "typecheck"], FRONTEND)
 
 

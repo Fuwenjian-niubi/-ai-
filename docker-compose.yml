@@ -1,0 +1,28 @@
+services:
+  scenic-qa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: scenic-ai-qa:latest
+    container_name: scenic-ai-qa
+    ports:
+      - "8000:8000"
+    environment:
+      # 使用 HuggingFace 镜像，加速嵌入/重排模型首次下载（国内可达）
+      - HF_ENDPOINT=https://hf-mirror.com
+    # 从宿主机 backend/.env 注入 LLM_API_KEY / LLM_BASE_URL / LLM_MODEL 等
+    # 注意：backend/.env 含密钥，已在 .gitignore 中，不会进入版本库
+    env_file:
+      - backend/.env
+    volumes:
+      # 持久化知识库原始资料、向量数据与用户库，避免容器重启丢失
+      - ./backend/data:/app/backend/data
+      - ./backend/app.db:/app/backend/app.db
+    restart: unless-stopped
+    healthcheck:
+      # 后端 /api/health 返回 {"status":"ok"} 即视为就绪
+      test: ["CMD", "/opt/venv/bin/python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
