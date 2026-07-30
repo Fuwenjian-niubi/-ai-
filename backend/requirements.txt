@@ -1,0 +1,31 @@
+# ===== 基础 Web / 鉴权（M1）=====
+fastapi>=0.110
+uvicorn[standard]>=0.27
+sqlalchemy>=2.0
+pydantic>=2.6
+pydantic-settings>=2.2
+python-jose[cryptography]>=3.3
+passlib[bcrypt]>=1.7.4
+bcrypt==4.0.1
+python-multipart>=0.0.9
+python-dotenv>=1.0
+
+# ===== RAG / 智能体（M2/M3）=====
+# langchain-openai 与 langgraph 会自带兼容的 langchain-core，无需单独列。
+langchain-openai>=0.2.0
+langgraph>=0.2.0
+chromadb>=0.5.0
+# bge 嵌入 + 重排（会顺带拉取 torch / transformers / huggingface-hub，体积较大）
+sentence-transformers>=2.5.0
+# llm.py 用 httpx.Client(trust_env=False) 强制直连 Agnes
+httpx>=0.27.0
+
+# ===== 文档解析（上传摄入）=====
+pypdf>=4.0.0
+python-docx>=1.1.0
+
+# ===== 语音（M4）=====
+# ASR：本地 faster-whisper（首次会从 HF 下载 base 模型，受 HF_ENDPOINT 镜像影响）
+faster-whisper>=1.0.0
+# TTS：edge-tts 在线合成（需可直连微软 TTS 服务）
+edge-tts>=1.1.0

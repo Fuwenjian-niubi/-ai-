@@ -1,0 +1,53 @@
+# ============================================================
+# 景点 AI 问答机器人 - 根 .gitignore
+# 目的：保护密钥、排除巨型构建/缓存/模型产物，仅存档源码
+# ============================================================
+
+# ---- Python 缓存 / 虚拟环境 ----
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# ---- 密钥与运行时配置（CRITICAL：切勿提交） ----
+.env
+*.env
+.env.*
+llm_runtime.json
+
+# ---- 数据库 / 向量库 ----
+*.db
+*.sqlite
+*.sqlite3
+chroma/
+
+# ---- 大模型权重 / 二进制 ----
+*.bin
+*.gguf
+*.onnx
+*.pt
+*.ckpt
+models/
+
+# ---- Node / 前端 ----
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+.cache/
+*.tsbuildinfo
+
+# ---- 编辑器 / 系统 ----
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# ---- 日志 ----
+*.log

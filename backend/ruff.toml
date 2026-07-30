@@ -1,0 +1,24 @@
+# ruff 配置（后端）
+# 目标：在存档门禁中作为质量检测通行证。保留能捕获真实缺陷的规则，
+# 忽略 FastAPI 惯用法与纯风格噪声，避免误伤已可运行的代码。
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I", "B", "C4", "SIM"]
+ignore = [
+    "E501",   # 行过长（风格）
+    "E402",   # 模块级 import 前的代码（部分文件故意如此）
+    "F401",   # 未使用 import（部分用于副作用注册）
+    "F403",   # 通配 import
+    "B008",   # FastAPI Depends() 默认值（误报）
+    "B904",   # except 内 raise 未用 from（稳健性建议，非缺陷）
+    "B905",   # zip 未指定 strict（Python3.10+ 建议，非缺陷）
+    "BLE001", # 宽泛 except（稳健性需要）
+    "S110",   # try-except-pass
+    "S112",   # try-except-continue
+    "ISC004", # 集合字面量内隐式字符串拼接
+    "C408",   # 不必要的集合调用
+    "UP035",  # 弃用 import
+    "SIM105", # 使用 contextlib.suppress
+]

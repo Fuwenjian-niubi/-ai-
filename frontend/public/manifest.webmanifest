@@ -1,0 +1,19 @@
+{
+  "name": "景点AI问答机器人",
+  "short_name": "景点AI",
+  "description": "基于 RAG 与智能体的多景点知识库问答系统",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
