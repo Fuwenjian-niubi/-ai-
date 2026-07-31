@@ -7,7 +7,7 @@ const base = import.meta.env.VITE_API_BASE || '/api'
 export const api = axios.create({
   baseURL: base,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 120000, // 大模型首响较慢，放宽超时
+  timeout: 30000, // 普通 API 30 秒超时；大模型流式走 EventSource，不受此限制
 })
 
 // 请求拦截：自动注入 JWT

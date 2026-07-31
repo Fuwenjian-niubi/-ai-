@@ -25,6 +25,7 @@ _FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "d
 
 def _preload_models():
     """后台预加载 bge 嵌入 / 重排模型与 Chroma 客户端，避免首次提问时再等待加载。"""
+    print("[startup] background model preload started...")
     try:
         from app.rag.chroma_store import get_client
         from app.rag.embeddings import _encoder
@@ -42,8 +43,9 @@ def _preload_models():
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     seed_admin()
-    # 后台预加载模型，不阻塞启动；若模型尚未下载会尝试从 HF 拉取（受 HF_ENDPOINT 影响）
-    threading.Thread(target=_preload_models, daemon=True).start()
+    # 先让服务器立即响应页面/API；10 秒后再后台预热模型，避免与首批请求争抢 CPU/GIL
+    print("[startup] server ready; model preload will start in 10s...")
+    threading.Timer(10.0, _preload_models).start()
     yield
 
 

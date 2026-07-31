@@ -20,8 +20,14 @@ export default function Admin() {
 
   const refresh = async () => {
     setLoading(true)
+    setError('')
     try {
-      const data = await listKBs()
+      const data = await Promise.race([
+        listKBs(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('请求超时，后端可能正在加载模型，请稍后刷新')), 10000),
+        ),
+      ])
       setKbs(data)
       const map: Record<number, DocOut[]> = {}
       await Promise.all(
@@ -31,7 +37,11 @@ export default function Admin() {
       )
       setDocsMap(map)
     } catch (e: any) {
-      setError(e?.response?.data?.detail || '加载失败')
+      if (e?.message?.includes('超时')) {
+        setError(e.message)
+      } else {
+        setError(e?.response?.data?.detail || '加载失败')
+      }
     } finally {
       setLoading(false)
     }

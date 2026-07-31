@@ -4,6 +4,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from .. import models, schemas
 from ..agent.cache import invalidate_kb
@@ -32,14 +33,18 @@ def create_kb(
 
 
 @router.get("", response_model=list[schemas.KBOut])
-def list_kbs(
+async def list_kbs(
     db: Session = Depends(get_db), _: models.User = Depends(get_current_user)
 ):
-    return (
-        db.query(models.KnowledgeBase)
+    # 用 run_in_threadpool 包装同步 ORM 查询，避免与模型预热线程竞争线程池导致请求挂起
+    print("[api /kb] listing knowledge bases")
+    result = await run_in_threadpool(
+        lambda: db.query(models.KnowledgeBase)
         .order_by(models.KnowledgeBase.created_at.desc())
         .all()
     )
+    print(f"[api /kb] returned {len(result)} knowledge bases")
+    return result
 
 
 @router.get("/{kb_id}/documents", response_model=list[schemas.DocOut])

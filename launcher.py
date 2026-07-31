@@ -3,6 +3,7 @@ import socket
 import subprocess
 import sys
 import time
+import webbrowser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -45,6 +46,20 @@ def kill_pid(pid: int):
         return False
 
 
+def kill_old_tourspot_windows():
+    """关闭之前启动的 TourSpot-Backend 窗口，避免多次双击启动.bat造成多进程竞争。"""
+    try:
+        subprocess.run(
+            ["taskkill", "/F", "/FI", "WINDOWTITLE eq TourSpot-Backend*"],
+            check=False,
+            capture_output=True,
+        )
+        # 给旧进程一点时间退出
+        time.sleep(1)
+    except Exception:
+        pass
+
+
 def find_free_port(start=8001, end=8010):
     for p in range(start, end + 1):
         if not is_port_in_use(p):
@@ -81,21 +96,38 @@ def ensure_voice_deps():
         print(f"       {VENV_PYTHON} -m pip install {' '.join(missing)}")
 
 
-def wait_for_server(port: int, timeout=30):
+def wait_for_server(port: int, timeout=60):
+    import urllib.request
+
     url = f"http://127.0.0.1:{port}/api/health"
-    for _ in range(timeout):
+    for i in range(timeout):
         try:
-            import urllib.request
             with urllib.request.urlopen(url, timeout=1) as resp:
                 if resp.status == 200:
                     return True
         except Exception:
             pass
         time.sleep(1)
+        if (i + 1) % 5 == 0:
+            print(f"[INFO] Waiting for server... ({i + 1}s)")
     return False
 
 
+def open_browser(url: str):
+    """用 Python 标准库打开默认浏览器（比 cmd 的 start 更可靠）。"""
+    print(f"[INFO] Opening browser: {url}")
+    try:
+        ok = webbrowser.open(url, new=2)
+    except Exception as e:  # noqa: BLE001
+        ok = False
+        print(f"[WARN] webbrowser.open failed: {e}")
+    if not ok:
+        print("[WARN] Could not auto-open browser. Please open manually:")
+        print(f"       {url}")
+
+
 def main():
+    kill_old_tourspot_windows()
     target_port = 8000
     pid = get_pid_on_port(target_port)
     if pid:
@@ -123,15 +155,17 @@ def main():
     )
     subprocess.Popen(cmd, shell=True)
 
-    print("[INFO] Waiting for server to be ready...")
-    if wait_for_server(target_port):
-        print("[INFO] Server is ready.")
-    else:
-        print("[WARN] Server did not respond in time. Opening browser anyway...")
-
+    print("[INFO] Waiting for server to be ready (up to 60s)...")
+    ready = wait_for_server(target_port)
     url = f"http://127.0.0.1:{target_port}"
-    print(f"[INFO] Opening browser at {url} ...")
-    subprocess.Popen(f'start "" {url}', shell=True)
+    if ready:
+        print("[INFO] Server is ready.")
+        open_browser(url)
+    else:
+        print("[WARN] Server did not respond in time.")
+        print("[WARN] Check the 'TourSpot-Backend' window for errors.")
+        print(f"[INFO] You can still try opening: {url}")
+        open_browser(url)
 
     print("[INFO] Done. Login with admin / 123456")
     print("[INFO] Close the 'TourSpot-Backend' window to stop the server.")
